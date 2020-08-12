@@ -1,0 +1,36 @@
+dist: xenial
+language: python
+cache: pip
+
+python:
+  - "3.6"
+  - "3.7"
+
+branches:
+  only:
+    - master
+
+env:
+  - DJANGO="django>=2.2,<3.0"
+  - DJANGO="django>=3.0,<3.1"
+
+before_install:
+  - pip install -U pip wheel setuptools
+  - pip install --no-cache-dir -U -r requirements-test.txt
+  - npm install jslint -g
+  - jslint django_netjsongraph/static/netjsongraph/js/*.js
+
+install:
+  - pip install $DJANGO
+  - python setup.py -q develop
+
+before_script:
+  - |
+    openwisp-utils-qa-checks --migration-path "./django_netjsongraph/migrations" \
+                             --migration-module django_netjsongraph
+
+script:
+  - coverage run --source=django_netjsongraph runtests.py
+
+after_success:
+  coveralls
